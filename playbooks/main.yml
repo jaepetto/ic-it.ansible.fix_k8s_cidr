@@ -1,0 +1,20 @@
+---
+- name: 'Ensure the the CIDR is set to /16 on all master nodes'
+  hosts: all
+  become: true
+  remote_user: root
+  tasks:
+    - name: 'Set the CIDR to /16'
+      ansible.builtin.lineinfile:
+        path: /etc/kubernetes/manifests/kube-controller-manager.yaml
+        backup: false # do not make a backup. If you do one, the file will be used to re-generate the kube-controller...
+        backrefs: true
+        regexp: (.*- --cluster-cidr=10.233.64.0/)\d\d
+        line: \g<1>16
+      notify: 'Restart the kubelet service'
+
+  handlers:
+    - name: 'Restart the kubelet service'
+      ansible.builtin.service:
+        name: kubelet
+        state: restarted
